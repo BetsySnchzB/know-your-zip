@@ -37,7 +37,7 @@ fac_data = facilities_points[facilities_points["ZIP"] == zip_key]
 # ------------------
 # KPIs
 # ------------------
-st.subheader("📈 Key Performance Indicators")
+st.subheader("Key Performance Indicators")
 k1, k2, k3 = st.columns(3)
 
 def safe_get(df, col, default="—"):
@@ -57,7 +57,7 @@ with k3:
 # ------------------
 # Charts
 # ------------------
-st.subheader("📊 Charts")
+st.subheader("Charts")
 chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
@@ -81,7 +81,7 @@ with chart_col2:
 # ------------------
 # Map
 # ------------------
-st.subheader("🗺️ Map")
+st.subheader("Map")
 if not fac_data.empty and {"latitude", "longitude"}.issubset(fac_data.columns):
     m = fac_data.dropna(subset=["latitude", "longitude"])
     if not m.empty:
@@ -108,7 +108,7 @@ else:
 # ------------------
 # Table + Download
 # ------------------
-st.subheader("📋 Facilities in this ZIP")
+st.subheader("Facilities in this ZIP")
 if not fac_data.empty:
     show_cols = [c for c in ["NAME", "FACILITY_TYPE", "ZIP", "latitude", "longitude"] if c in fac_data.columns]
     st.dataframe(fac_data[show_cols].reset_index(drop=True), use_container_width=True)
@@ -118,7 +118,7 @@ if not fac_data.empty:
         return df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
-        "⬇️ Download current list (CSV)",
+        "Download current list (CSV)",
         data=_csv_bytes(fac_data),
         file_name=f"facilities_{zip_key}.csv",
         mime="text/csv",
