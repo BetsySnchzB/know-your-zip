@@ -13,8 +13,8 @@ st.markdown("Explore zip code facilities, income, and your custom score.")
 # ------------------
 # Load data
 # ------------------
-zip_summary = pd.read_csv("data/zip_summary.csv")
-facilities_points = pd.read_csv("data/facilities_points.csv")
+zip_summary = pd.read_csv("data/processed/zip_summary.csv")
+facilities_points = pd.read_csv("data/processed/facilities_points.csv")
 
 zip_summary["ZIP"] = zip_summary["ZIP"].astype(str).str[:5].str.zfill(5)
 facilities_points["ZIP"] = facilities_points["ZIP"].astype(str).str[:5].str.zfill(5)
