@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import pydeck as pdk
+from services.chatbot import ask_about_zip
 
 # ------------------
 # Page config
@@ -25,7 +26,6 @@ facilities_points["ZIP"] = facilities_points["ZIP"].astype(str).str[:5].str.zfil
 st.sidebar.header("Search Parameters")
 user_zip = st.sidebar.text_input("Enter ZIP Code", placeholder="e.g., 33155")
 radius_km = st.sidebar.number_input("Radius (km)", min_value=0, max_value=50, value=0)
-# (Radius not used yet; we’ll wire proximity next.)
 
 # ------------------
 # Filter data
@@ -38,14 +38,16 @@ fac_data = facilities_points[facilities_points["ZIP"] == zip_key]
 # KPIs
 # ------------------
 st.subheader("Key Performance Indicators")
-k1, k2, k3 = st.columns(3)
+k1, k2, k3, k4 = st.columns(4)
 
 def safe_get(df, col, default="—"):
     return df[col].iloc[0] if (not df.empty and col in df.columns) else default
 
-pop = safe_get(zip_data, "Population", "—")
-income = safe_get(zip_data, "INCOME", "—")
-score = safe_get(zip_data, "FACILITY_SCORE_WEIGHTED", "—")
+pop       = safe_get(zip_data, "Population", "—")
+income    = safe_get(zip_data, "INCOME", "—")
+score     = safe_get(zip_data, "FACILITY_SCORE_WEIGHTED", "—")
+rating    = safe_get(zip_data, "WEIGHTED_RATING", "—")
+med_age   = safe_get(zip_data, "MEDIAN_AGE", "—")
 
 with k1:
     st.metric("Population", f"{int(pop):,}" if pop != "—" else "—")
@@ -53,6 +55,12 @@ with k2:
     st.metric("Median Income", f"${income:,.0f}" if income != "—" else "—")
 with k3:
     st.metric("Facility Score", f"{int(score):,}" if score != "—" else "—")
+with k4:
+    if rating != "—":
+        color = {"Low": "🔴", "Medium": "🟡", "High": "🟢"}.get(str(rating), "⚪")
+        st.metric("Overall Rating", f"{color} {rating}")
+    else:
+        st.metric("Overall Rating", "—")
 
 # ------------------
 # Charts
@@ -61,7 +69,6 @@ st.subheader("Charts")
 chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
-    # A) Facilities by type in this ZIP
     if not fac_data.empty:
         counts = fac_data["FACILITY_TYPE"].value_counts().reset_index()
         counts.columns = ["FACILITY_TYPE", "count"]
@@ -71,7 +78,6 @@ with chart_col1:
         st.info("Enter a ZIP to see facility mix.")
 
 with chart_col2:
-    # B) Income distribution across all ZIPs (highlight chosen ZIP)
     if "INCOME" in zip_summary.columns and zip_summary["INCOME"].notna().any():
         fig2 = px.histogram(zip_summary, x="INCOME", nbins=30, title="Income Distribution (All ZIPs)")
         if not zip_data.empty:
@@ -101,7 +107,7 @@ if not fac_data.empty and {"latitude", "longitude"}.issubset(fac_data.columns):
             pdk.Deck(layers=[layer], initial_view_state=view, tooltip={"text": "{NAME}\n{FACILITY_TYPE}"})
         )
     else:
-        st.info("No coordinates available for this ZIP’s facilities.")
+        st.info("No coordinates available for this ZIP's facilities.")
 else:
     st.info("Enter a ZIP to see the map.")
 
@@ -125,3 +131,19 @@ if not fac_data.empty:
     )
 else:
     st.info("Enter a ZIP to see the facility list.")
+
+# ------------------
+# Chatbot
+# ------------------
+st.subheader("Ask About This ZIP")
+
+if zip_data.empty:
+    st.info("Enter a ZIP code above to start asking questions!")
+else:
+    question = st.text_input("Ask a question about this ZIP code", placeholder="e.g. Is this a good ZIP for families?")
+
+    if question:
+        with st.spinner("Thinking..."):
+            zip_dict = zip_data.iloc[0].to_dict()
+            answer = ask_about_zip(question, zip_dict)
+            st.success(answer)
