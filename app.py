@@ -194,7 +194,7 @@ if not fac_data.empty and {"latitude", "longitude"}.issubset(fac_data.columns):
                           get_radius=80, get_fill_color=[26, 122, 110, 180], pickable=True)
         st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view,
                                   tooltip={"text": "{NAME}\n{FACILITY_TYPE}"},
-                                  map_style="mapbox://styles/mapbox/light-v10"))
+                                  map_style="mapbox://styles/mapbox/light-v9"))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
