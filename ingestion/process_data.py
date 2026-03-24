@@ -2,8 +2,11 @@ import pandas as pd
 import requests
 import io
 import os
-from pathlib import Path
 from dotenv import load_dotenv
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from services.geocoding import fill_missing_coordinates
 
 load_dotenv()
 
@@ -79,19 +82,19 @@ def clean_zip(df, col):
 # ------------------
 # Clean facility datasets
 # ------------------
-def clean_facility(df, zip_col, name_col, lat_col, lon_col, facility_type):
-    df = df[[zip_col, name_col, lat_col, lon_col]].copy()
-    df.columns = ["ZIP", "NAME", "latitude", "longitude"]
+def clean_facility(df, zip_col, name_col, addr_col, lat_col, lon_col, facility_type):
+    df = df[[zip_col, name_col, addr_col, lat_col, lon_col]].copy()
+    df.columns = ["ZIP", "NAME", "ADDRESS", "latitude", "longitude"]
     df = clean_zip(df, "ZIP")
     df["FACILITY_TYPE"] = facility_type
     return df.dropna(subset=["ZIP"])
 
-fire_clean    = clean_facility(fire_station,   "ZIPCODE", "NAME", "LAT", "LON", "Fire Station")
-police_clean  = clean_facility(police_station, "ZIPCODE", "NAME", "LAT", "LON", "Police Station")
-private_clean = clean_facility(private_school, "ZIPCODE", "NAME", "LAT", "LON", "Private School")
-public_clean  = clean_facility(public_school,  "ZIPCODE", "NAME", "LAT", "LON", "Public School")
-park_clean    = clean_facility(park_facility,  "ZIPCODE", "NAME", "LAT", "LON", "Park")
-hotel_clean   = clean_facility(hotel,          "ZIPCODE", "NAME", "LAT", "LON", "Hotel/Motel")
+fire_clean    = clean_facility(fire_station,   "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Fire Station")
+police_clean  = clean_facility(police_station, "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Police Station")
+private_clean = clean_facility(private_school, "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Private School")
+public_clean  = clean_facility(public_school,  "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Public School")
+park_clean    = clean_facility(park_facility,  "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Park")
+hotel_clean   = clean_facility(hotel,          "ZIPCODE", "NAME", "ADDRESS", "LAT", "LON", "Hotel/Motel")
 
 # ------------------
 # Build facilities_points.csv
@@ -100,6 +103,8 @@ facilities_points = pd.concat(
     [fire_clean, police_clean, private_clean, public_clean, park_clean, hotel_clean],
     ignore_index=True
 )
+
+facilities_points = fill_missing_coordinates(facilities_points)
 
 # ------------------
 # Build zip_summary.csv
