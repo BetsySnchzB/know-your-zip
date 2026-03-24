@@ -68,6 +68,13 @@ st.markdown("""
 # ------------------
 @st.cache_data
 def load_data():
+    import subprocess
+    from pathlib import Path
+    
+    if not Path("data/processed/zip_summary.csv").exists():
+        with st.spinner("Setting up data for first time... this takes ~2 minutes!"):
+            subprocess.run(["python", "ingestion/process_data.py"])
+    
     zip_summary = pd.read_csv("data/processed/zip_summary.csv")
     facilities_points = pd.read_csv("data/processed/facilities_points.csv")
     zip_summary["ZIP"] = zip_summary["ZIP"].astype(str).str[:5].str.zfill(5)
